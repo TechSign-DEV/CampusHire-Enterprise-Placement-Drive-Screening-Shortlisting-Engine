@@ -1,6 +1,5 @@
 
-import { Link, useNavigate } from "react-router-dom";
-
+import { Link } from "react-router-dom";
 import {
   Users,
   Building2,
@@ -9,152 +8,167 @@ import {
   CalendarDays,
   ClipboardList,
   Video,
-  ArrowRight,
+  ArrowUpRight,
   GraduationCap,
   Building,
   ChartNoAxesCombined,
   ShieldCheck,
   FileSpreadsheet,
-  LogOut,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
-
 import { useAuth } from "../context/AuthContext";
+import "./Dashboard.css";
 
 const dashboardCards = {
   ADMIN: [
     {
       title: "Manage Students",
-      description: "View registered students and their academic profiles.",
+      description: "View student profiles and academic records.",
       path: "/admin/students",
       icon: Users,
-      color: "primary",
+      color: "blue",
+      category: "MANAGEMENT",
     },
     {
       title: "Manage Companies",
-      description: "View companies registered by recruiters.",
+      description: "Manage companies registered on CampusHire.",
       path: "/admin/companies",
       icon: Building2,
-      color: "success",
+      color: "green",
+      category: "MANAGEMENT",
     },
     {
       title: "User Management",
-      description: "Search users and activate or deactivate accounts.",
+      description: "Control access and manage user accounts.",
       path: "/admin/users",
       icon: ShieldCheck,
-      color: "danger",
+      color: "red",
+      category: "ADMINISTRATION",
     },
     {
       title: "Placement Drives",
-      description: "View placement drives and their details.",
+      description: "Explore and oversee recruitment drives.",
       path: "/drives",
       icon: BriefcaseBusiness,
-      color: "info",
+      color: "purple",
+      category: "RECRUITMENT",
     },
     {
       title: "Screening & Shortlisting",
-      description: "Evaluate eligibility and shortlist candidates.",
+      description: "Evaluate eligibility and select candidates.",
       path: "/screening",
       icon: FileCheck,
-      color: "warning",
+      color: "orange",
+      category: "RECRUITMENT",
     },
     {
       title: "Interview Scheduling",
-      description: "Create interview batches and manage candidate slots.",
+      description: "Organize rounds and manage interview slots.",
       path: "/interviews",
       icon: CalendarDays,
-      color: "danger",
+      color: "pink",
+      category: "RECRUITMENT",
     },
     {
       title: "Analytics Dashboard",
-      description:
-        "Track students, companies, applications, and interview statistics.",
+      description: "Monitor placement performance and activity.",
       path: "/analytics",
       icon: ChartNoAxesCombined,
-      color: "primary",
+      color: "cyan",
+      category: "INSIGHTS",
     },
     {
       title: "Placement Reports",
-      description: "Export application, screening, and interview reports.",
+      description: "Export recruitment and interview reports.",
       path: "/reports",
       icon: FileSpreadsheet,
-      color: "success",
+      color: "green",
+      category: "INSIGHTS",
     },
   ],
-
   STUDENT: [
     {
       title: "My Academic Profile",
-      description: "Maintain your academic details and eligibility data.",
+      description: "Manage your academic details and eligibility.",
       path: "/student/profile",
       icon: GraduationCap,
-      color: "primary",
+      color: "blue",
+      category: "MY PLACEMENT",
     },
     {
       title: "Placement Drives",
-      description: "Explore open placement drives and job opportunities.",
+      description: "Explore opportunities that match your profile.",
       path: "/drives",
       icon: BriefcaseBusiness,
-      color: "success",
+      color: "green",
+      category: "MY PLACEMENT",
     },
     {
       title: "My Applications",
-      description: "Apply to eligible drives and track your application status.",
+      description: "Track your applications and selection progress.",
       path: "/student/applications",
       icon: ClipboardList,
-      color: "info",
+      color: "purple",
+      category: "MY PLACEMENT",
     },
     {
       title: "My Interviews",
-      description: "View interview dates, times, and meeting links.",
+      description: "View interview schedules and meeting links.",
       path: "/student/interviews",
       icon: Video,
-      color: "warning",
+      color: "orange",
+      category: "MY PLACEMENT",
     },
   ],
-
   RECRUITER: [
     {
       title: "Company Profile",
-      description: "Manage your company information.",
+      description: "Maintain your company information.",
       path: "/company-profile",
       icon: Building,
-      color: "primary",
+      color: "blue",
+      category: "RECRUITMENT",
     },
     {
       title: "Placement Drives",
-      description: "Create and manage your placement drives.",
+      description: "Create and manage your hiring drives.",
       path: "/drives",
       icon: BriefcaseBusiness,
-      color: "success",
+      color: "green",
+      category: "RECRUITMENT",
     },
     {
       title: "Screening & Shortlisting",
-      description: "Review eligible applicants and shortlist candidates.",
+      description: "Evaluate applicants and shortlist candidates.",
       path: "/screening",
       icon: FileCheck,
-      color: "info",
+      color: "purple",
+      category: "CANDIDATE MANAGEMENT",
     },
     {
       title: "Interview Scheduling",
       description: "Schedule interviews for shortlisted candidates.",
       path: "/interviews",
       icon: CalendarDays,
-      color: "warning",
+      color: "orange",
+      category: "CANDIDATE MANAGEMENT",
     },
     {
       title: "Analytics Dashboard",
-      description:
-        "Track your placement drives, applications, and interview progress.",
+      description: "Review recruitment progress and statistics.",
       path: "/analytics",
       icon: ChartNoAxesCombined,
-      color: "primary",
+      color: "cyan",
+      category: "INSIGHTS",
     },
     {
       title: "Placement Reports",
-      description: "Export application, screening, and interview reports.",
+      description: "Export application and interview reports.",
       path: "/reports",
       icon: FileSpreadsheet,
-      color: "success",
+      color: "green",
+      category: "INSIGHTS",
     },
   ],
 };
@@ -165,146 +179,141 @@ const roleLabels = {
   RECRUITER: "Recruiter",
 };
 
-const colorClasses = {
-  primary: "dashboard-icon-primary",
-  success: "dashboard-icon-success",
-  danger: "dashboard-icon-danger",
-  info: "dashboard-icon-info",
-  warning: "dashboard-icon-warning",
-};
-
 export default function Dashboard() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
+  const { user } = useAuth();
   const role = user?.role?.toUpperCase();
   const cards = dashboardCards[role] || [];
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } finally {
-      navigate("/login", { replace: true });
-    }
-  };
+  const firstName = user?.name?.trim()?.split(/\s+/)[0] || "there";
 
   return (
-    <div className="container-fluid px-3 px-md-4 py-4 dashboard-page">
-      {/* Welcome section */}
-      <div className="card dashboard-welcome mb-4">
-        <div className="card-body p-4 p-lg-5">
-          <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-            <div className="d-flex align-items-center gap-3">
-              <div className="dashboard-welcome-icon">
-                <GraduationCap size={32} />
-              </div>
+    <div className="cd-content cd-dashboard-only">
+      <section className="cd-hero">
+        <div className="cd-hero-copy">
+          <span className="cd-hero-eyebrow">
+            <Sparkles size={14} />
+            YOUR CAMPUSHIRE WORKSPACE
+          </span>
 
-              <div>
-                <p className="dashboard-eyebrow mb-1">
-                  CAMPUSHIRE WORKSPACE
-                </p>
+          <h1>
+            Welcome back,
+            <br />
+            <span>{firstName}.</span>
+          </h1>
 
-                <h2 className="fw-bold mb-2 dashboard-welcome-title">
-                  Welcome, {user?.name || "User"}!
-                </h2>
+          <p>
+            Everything you need for your placement journey, all in one
+            place. Choose a module below to get started.
+          </p>
 
-                <span className="badge rounded-pill text-bg-primary px-3 py-2">
-                  {roleLabels[role] || role || "User"}
-                </span>
-              </div>
-            </div>
+          <div className="cd-hero-meta">
+            <span className="cd-role-pill">
+              <ShieldCheck size={15} />
+              {roleLabels[role] || role || "Member"}
+            </span>
+            <span className="cd-meta-separator" />
+            <span>{cards.length} available modules</span>
+          </div>
+        </div>
 
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="btn btn-outline-danger dashboard-logout"
-            >
-              <LogOut size={17} />
-              <span>Logout</span>
-            </button>
+        <div className="cd-hero-art" aria-hidden="true">
+          <div className="cd-art-circle cd-art-circle-one" />
+          <div className="cd-art-circle cd-art-circle-two" />
+          <div className="cd-art-cap">
+            <GraduationCap size={91} strokeWidth={1.3} />
           </div>
 
-          <p className="dashboard-welcome-description mb-0 mt-4">
-            Manage your placement activities, applications, screening,
-            interviews, and recruitment progress from one place.
-          </p>
+          <div className="cd-art-card cd-art-card-one">
+            <span className="cd-art-card-icon">
+              <BriefcaseBusiness size={19} />
+            </span>
+            <span>
+              <strong>Career growth</strong>
+              <small>Opportunities await</small>
+            </span>
+          </div>
+
+          <div className="cd-art-card cd-art-card-two">
+            <span className="cd-art-check">✓</span>
+            <span>
+              <strong>One workspace</strong>
+              <small>Organized placement</small>
+            </span>
+          </div>
+          <div className="cd-art-sparkle cd-art-sparkle-one">✦</div>
+          <div className="cd-art-sparkle cd-art-sparkle-two">✧</div>
         </div>
-      </div>
+      </section>
 
-      {/* Workspace heading */}
-      <div className="dashboard-section-heading mb-4">
-        <div>
-          <h4 className="fw-bold mb-1">Your Workspace</h4>
-          <p className="text-secondary mb-0">
-            Choose a section to continue.
-          </p>
+      <section className="cd-module-section">
+        <div className="cd-section-header">
+          <div>
+            <span className="cd-section-eyebrow">GET THINGS DONE</span>
+            <h2>Your workspace</h2>
+            <p>Pick up where you left off or explore another module.</p>
+          </div>
+
+          <span className="cd-module-counter">
+            <span>{cards.length.toString().padStart(2, "0")}</span>
+            MODULES
+          </span>
         </div>
 
-        <span className="dashboard-module-count">
-          {cards.length} {cards.length === 1 ? "Module" : "Modules"}
-        </span>
-      </div>
+        {cards.length === 0 ? (
+          <div className="cd-empty-state">
+            <ShieldCheck size={28} />
+            <h3>Role not recognized</h3>
+            <p>
+              Your account role is not recognized. Please verify your
+              account role.
+            </p>
+          </div>
+        ) : (
+          <div className="cd-module-grid">
+            {cards.map((card, index) => {
+              const Icon = card.icon;
 
-      {/* Role-specific cards */}
-      {cards.length === 0 ? (
-        <div className="alert alert-warning">
-          Your account role is not recognized. Please verify your account role.
-        </div>
-      ) : (
-        <div className="row g-4">
-          {cards.map((card) => {
-            const Icon = card.icon;
-            const iconClass =
-              colorClasses[card.color] || colorClasses.primary;
-
-            return (
-              <div
-                className="col-12 col-sm-6 col-xl-4"
-                key={card.path}
-              >
+              return (
                 <Link
+                  key={card.path}
                   to={card.path}
-                  className="dashboard-card-link"
-                  aria-label={`Open ${card.title}`}
+                  className={`cd-module-card cd-card-${card.color}`}
+                  style={{ "--cd-card-index": index }}
                 >
-                  <div className="card dashboard-module-card h-100">
-                    <div className="card-body p-4">
-                      <div className="d-flex justify-content-between align-items-start mb-4">
-                        <div className={`dashboard-module-icon ${iconClass}`}>
-                          <Icon size={25} strokeWidth={1.9} />
-                        </div>
+                  <div className="cd-module-card-top">
+                    <span className="cd-module-icon">
+                      <Icon size={23} strokeWidth={1.8} />
+                    </span>
+                    <span className="cd-module-arrow">
+                      <ArrowUpRight size={19} />
+                    </span>
+                  </div>
 
-                        <span className="dashboard-arrow">
-                          <ArrowRight size={19} />
-                        </span>
-                      </div>
+                  <span className="cd-module-category">
+                    {card.category}
+                  </span>
 
-                      <h5 className="fw-bold mb-2 dashboard-module-title">
-                        {card.title}
-                      </h5>
+                  <h3>{card.title}</h3>
+                  <p>{card.description}</p>
 
-                      <p className="text-secondary mb-0 dashboard-module-description">
-                        {card.description}
-                      </p>
-                    </div>
+                  <div className="cd-module-card-bottom">
+                    <span>Open module</span>
+                    <ArrowRight size={16} />
                   </div>
                 </Link>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </section>
 
-      {/* Footer */}
-      <div className="dashboard-footer mt-5 pt-4">
-        <span className="text-secondary small">
-          CampusHire · Placement Drive Management System
+      <footer className="cd-footer">
+        <span className="cd-footer-brand">
+          <GraduationCap size={18} />
+          CampusHire
         </span>
-
-        <span className="text-secondary small dashboard-footer-email">
-          Signed in as {user?.email || "User"}
-        </span>
-      </div>
+        <span>Placement Drive Management System</span>
+        <span>Signed in as {user?.email || "User"}</span>
+      </footer>
     </div>
   );
 }

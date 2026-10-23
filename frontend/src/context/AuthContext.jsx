@@ -1,9 +1,11 @@
+
 import {
   createContext,
   useContext,
   useEffect,
-  useState
+  useState,
 } from "react";
+
 import api from "../services/api";
 
 const AuthContext = createContext(null);
@@ -24,7 +26,7 @@ export function AuthProvider({ children }) {
       try {
         const response = await api.get("/auth/me");
         setUser(response.data.user);
-      } catch {
+      } catch (error) {
         localStorage.removeItem("campushire_token");
         setUser(null);
       } finally {
@@ -35,6 +37,7 @@ export function AuthProvider({ children }) {
     validateSession();
   }, []);
 
+  // Login: save token and authenticate the user.
   const login = async (credentials) => {
     const response = await api.post("/auth/login", credentials);
 
@@ -48,19 +51,17 @@ export function AuthProvider({ children }) {
     return response.data.user;
   };
 
+  // Register: create account only. Do not log in automatically.
   const register = async (formData) => {
-    const response = await api.post("/auth/register", formData);
-
-    localStorage.setItem(
-      "campushire_token",
-      response.data.token
+    const response = await api.post(
+      "/auth/register",
+      formData
     );
 
-    setUser(response.data.user);
-
-    return response.data.user;
+    return response.data;
   };
 
+  // Logout: clear authentication.
   const logout = () => {
     localStorage.removeItem("campushire_token");
     setUser(null);
@@ -73,7 +74,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         register,
-        logout
+        logout,
       }}
     >
       {children}
@@ -85,7 +86,9 @@ export function useAuth() {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
+    throw new Error(
+      "useAuth must be used inside AuthProvider"
+    );
   }
 
   return context;

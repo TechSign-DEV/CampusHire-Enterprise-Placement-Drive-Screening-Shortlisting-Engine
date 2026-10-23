@@ -197,9 +197,7 @@ export default function Drives() {
 
   return (
     <main className="dashboard-content">
-      <Link to="/dashboard" className="btn btn-link mb-3">
-        ← Back to Dashboard
-      </Link>
+     
 
       <h1 className="h3 fw-bold">Placement Drives</h1>
 
@@ -419,20 +417,8 @@ export default function Drives() {
             </div>
 
             <div className="col-md-4">
-              <label className="form-label" htmlFor="drive-coding-score">
-                Minimum coding score
-              </label>
-              <input
-                id="drive-coding-score"
-                className="form-control"
-                type="number"
-                name="minCodingScore"
-                min="0"
-                max="100"
-                value={form.minCodingScore}
-                onChange={change}
-                required
-              />
+            
+           
             </div>
 
             <div className="col-md-6">

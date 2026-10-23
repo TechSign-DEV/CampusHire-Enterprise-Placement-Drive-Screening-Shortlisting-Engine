@@ -8,7 +8,9 @@ import {
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MainLayout from "./components/MainLayout";
 
+import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -28,21 +30,35 @@ import StudentInterviews from "./pages/StudentInterviews";
 import Analytics from "./pages/Analytics";
 import UserManagement from "./pages/UserManagement";
 import Reports from "./pages/Reports";
+
 function HomeRedirect() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="loading-screen">Loading CampusHire...</div>;
+    return (
+      <div className="loading-screen">
+        Loading CampusHire...
+      </div>
+    );
   }
 
-  return <Navigate to={user ? "/dashboard" : "/login"} replace />;
+  return (
+    <Navigate
+      to={user ? "/dashboard" : "/"}
+      replace
+    />
+  );
 }
 
 function GuestRoute({ children }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="loading-screen">Loading CampusHire...</div>;
+    return (
+      <div className="loading-screen">
+        Loading CampusHire...
+      </div>
+    );
   }
 
   return user ? (
@@ -55,8 +71,8 @@ function GuestRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Home */}
-      <Route path="/" element={<HomeRedirect />} />
+      {/* Public home page */}
+      <Route path="/" element={<Home />} />
 
       {/* Guest routes */}
       <Route
@@ -77,63 +93,112 @@ function AppRoutes() {
         }
       />
 
-      {/* Routes accessible to all authenticated users */}
+      {/* All authenticated pages share one persistent layout */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/drives" element={<Drives />} />
-      </Route>
+        <Route element={<MainLayout />}>
+          {/* All authenticated users */}
+          <Route
+            path="/dashboard"
+            element={<Dashboard />}
+          />
 
-      {/* Student routes */}
-      <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} />}>
-        <Route path="/student/profile" element={<StudentProfile />} />
+          <Route
+            path="/drives"
+            element={<Drives />}
+          />
 
-        <Route
-          path="/student/applications"
-          element={<StudentApplications />}
-        />
+          {/* Student routes */}
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={["STUDENT"]} />
+            }
+          >
+            <Route
+              path="/student/profile"
+              element={<StudentProfile />}
+            />
 
-        <Route
-          path="/student/interviews"
-          element={<StudentInterviews />}
-        />
-      </Route>
+            <Route
+              path="/student/applications"
+              element={<StudentApplications />}
+            />
 
-      {/* Admin routes */}
-      <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-        <Route path="/admin/students" element={<Students />} />
+            <Route
+              path="/student/interviews"
+              element={<StudentInterviews />}
+            />
+          </Route>
 
-        <Route path="/admin/companies" element={<Companies />} />
-      </Route>
-<Route
-  path="/admin/users"
-  element={<UserManagement />}
-/>
-      {/* Admin and Recruiter routes */}
-      <Route
-        element={
-          <ProtectedRoute allowedRoles={["ADMIN", "RECRUITER"]} />
-        }
-      >
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/screening" element={<Screening />} />
+          {/* Admin routes */}
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]} />
+            }
+          >
+            <Route
+              path="/admin/students"
+              element={<Students />}
+            />
 
-<Route path="/reports" element={<Reports />} />
-        <Route
-          path="/interviews"
-          element={<InterviewScheduling />}
-        />
-      </Route>
+            <Route
+              path="/admin/companies"
+              element={<Companies />}
+            />
 
-      {/* Recruiter routes */}
-      <Route element={<ProtectedRoute allowedRoles={["RECRUITER"]} />}>
-        <Route
-          path="/company-profile"
-          element={<CompanyProfile />}
-        />
+            <Route
+              path="/admin/users"
+              element={<UserManagement />}
+            />
+          </Route>
+
+          {/* Admin and recruiter routes */}
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={["ADMIN", "RECRUITER"]}
+              />
+            }
+          >
+            <Route
+              path="/analytics"
+              element={<Analytics />}
+            />
+
+            <Route
+              path="/screening"
+              element={<Screening />}
+            />
+
+            <Route
+              path="/reports"
+              element={<Reports />}
+            />
+
+            <Route
+              path="/interviews"
+              element={<InterviewScheduling />}
+            />
+          </Route>
+
+          {/* Recruiter routes */}
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={["RECRUITER"]} />
+            }
+          >
+            <Route
+              path="/company-profile"
+              element={<CompanyProfile />}
+            />
+          </Route>
+        </Route>
       </Route>
 
       {/* Fallback */}
-      <Route path="*" element={<HomeRedirect />} />
+      <Route
+        path="*"
+        element={<HomeRedirect />}
+      />
     </Routes>
   );
 }

@@ -1,7 +1,6 @@
 
 import User from "../models/User.js";
 import Student from "../models/Student.js";
-import Assessment from "../models/Assessment.js";
 import Application from "../models/Application.js";
 import Drive from "../models/Drive.js";
 
@@ -24,39 +23,29 @@ export async function screenDrive(driveId) {
       totalStudents: 0,
       eligible: 0,
       notEligible: 0,
-      pending: 0
+      pending: 0,
     };
   }
 
-  const studentIds = students.map(student => student._id);
+  const studentIds = students.map((student) => student._id);
 
-  const [profiles, assessments] = await Promise.all([
-    Student.find({ user: { $in: studentIds } }).lean(),
-
-    Assessment.find({
-      drive: drive._id,
-      student: { $in: studentIds }
-    }).lean()
-  ]);
+  const profiles = await Student.find({
+    user: { $in: studentIds },
+  }).lean();
 
   const profileMap = new Map(
-    profiles.map(profile => [profile.user.toString(), profile])
-  );
-
-  const assessmentMap = new Map(
-    assessments.map(assessment => [
-      assessment.student.toString(),
-      assessment
+    profiles.map((profile) => [
+      profile.user.toString(),
+      profile,
     ])
   );
 
   const c = drive.criteria;
   const now = new Date();
 
-  const operations = students.map(student => {
+  const operations = students.map((student) => {
     const id = student._id.toString();
     const profile = profileMap.get(id);
-    const assessment = assessmentMap.get(id);
 
     const reasons = [];
     let eligibilityStatus = "ELIGIBLE";
@@ -65,105 +54,111 @@ export async function screenDrive(driveId) {
       eligibilityStatus = "PENDING";
       reasons.push("Academic profile is incomplete");
     } else {
-      if (profile.tenthPercentage < c.tenthPercentage) {
-        reasons.push(
-          `10th percentage is below ${c.tenthPercentage}%`
-        );
-      }
-
-      if (profile.twelfthPercentage < c.twelfthPercentage) {
-        reasons.push(
-          `12th percentage is below ${c.twelfthPercentage}%`
-        );
-      }
-
-      if (profile.cgpa < c.cgpa) {
-        reasons.push(`CGPA is below ${c.cgpa}`);
-      }
-
-      if (profile.activeBacklogs > c.maxActiveBacklogs) {
-        reasons.push(
-          `Active backlogs exceed ${c.maxActiveBacklogs}`
-        );
-      }
-
-      if (profile.graduationYear !== c.graduationYear) {
-        reasons.push(
-          `Graduation year must be ${c.graduationYear}`
-        );
-      }
-
       if (
-        drive.eligibleDepartments?.length > 0 &&
-        !drive.eligibleDepartments.includes(profile.department)
+        profile.tenthPercentage == null ||
+        profile.twelfthPercentage == null ||
+        profile.cgpa == null ||
+        profile.activeBacklogs == null ||
+        profile.graduationYear == null ||
+        !profile.department
       ) {
-        reasons.push("Department is not eligible for this drive");
+        eligibilityStatus = "PENDING";
+        reasons.push("Academic profile is incomplete");
+      } else {
+        if (profile.tenthPercentage < (c.tenthPercentage ?? 0)) {
+          reasons.push(
+            `10th percentage is below ${c.tenthPercentage ?? 0}%`
+          );
+        }
+
+        if (profile.twelfthPercentage < (c.twelfthPercentage ?? 0)) {
+          reasons.push(
+            `12th percentage is below ${c.twelfthPercentage ?? 0}%`
+          );
+        }
+
+        if (profile.cgpa < (c.cgpa ?? 0)) {
+          reasons.push(`CGPA is below ${c.cgpa ?? 0}`);
+        }
+
+        if (
+          profile.activeBacklogs >
+          (c.maxActiveBacklogs ?? 0)
+        ) {
+          reasons.push(
+            `Active backlogs exceed ${c.maxActiveBacklogs ?? 0}`
+          );
+        }
+
+        if (profile.graduationYear !== c.graduationYear) {
+          reasons.push(
+            `Graduation year must be ${c.graduationYear}`
+          );
+        }
+
+        if (
+          drive.eligibleDepartments?.length > 0 &&
+          !drive.eligibleDepartments.includes(profile.department)
+        ) {
+          reasons.push(
+            "Department is not eligible for this drive"
+          );
+        }
       }
     }
 
-    const minCodingScore = c.minCodingScore ?? 0;
-    const codingScore = assessment?.score ?? null;
-
-    if (minCodingScore > 0 && codingScore === null) {
-      eligibilityStatus = "PENDING";
-      reasons.push("Coding assessment is not completed");
-    } else if (
-      codingScore !== null &&
-      codingScore < minCodingScore
-    ) {
-      reasons.push(
-        `Coding score is below ${minCodingScore}`
-      );
-    }
-
-    if (reasons.some(reason =>
-      reason !== "Academic profile is incomplete" &&
-      reason !== "Coding assessment is not completed"
+    if (reasons.some((reason) =>
+      reason !== "Academic profile is incomplete"
     )) {
       eligibilityStatus = "NOT_ELIGIBLE";
+    } else if (reasons.length > 0) {
+      eligibilityStatus = "PENDING";
+    } else {
+      eligibilityStatus = "ELIGIBLE";
     }
 
     return {
       updateOne: {
         filter: {
           student: student._id,
-          drive: drive._id
+          drive: drive._id,
         },
         update: {
           $set: {
             eligibilityStatus,
             reasons,
-            codingScore,
-            screenedAt: now
+            screenedAt: now,
           },
           $setOnInsert: {
             student: student._id,
             drive: drive._id,
             applicationStatus: "NOT_APPLIED",
-            appliedAt: null
-          }
+            appliedAt: null,
+          },
         },
-        upsert: true
-      }
+        upsert: true,
+      },
     };
   });
 
-  await Application.bulkWrite(operations, { ordered: false });
+  await Application.bulkWrite(operations, {
+    ordered: false,
+  });
 
   const results = await Application.aggregate([
     { $match: { drive: drive._id } },
     {
       $group: {
         _id: "$eligibilityStatus",
-        count: { $sum: 1 }
-      }
-    }
+        count: { $sum: 1 },
+      },
+    },
   ]);
 
   const counts = {
     ELIGIBLE: 0,
     NOT_ELIGIBLE: 0,
-    PENDING: 0
+    PENDING: 0,
   };
 
   for (const result of results) {
@@ -175,6 +170,6 @@ export async function screenDrive(driveId) {
     totalStudents: students.length,
     eligible: counts.ELIGIBLE,
     notEligible: counts.NOT_ELIGIBLE,
-    pending: counts.PENDING
+    pending: counts.PENDING,
   };
 }

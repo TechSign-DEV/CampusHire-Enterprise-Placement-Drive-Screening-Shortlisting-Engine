@@ -69,7 +69,7 @@ const validateDriveInput = (data) => {
     ["twelfthPercentage", 0, 100],
     ["cgpa", 0, 10],
     ["maxActiveBacklogs", 0, 100],
-    ["minCodingScore", 0, 100]
+    
   ];
 
   for (const [field, min, max] of ranges) {
@@ -229,9 +229,7 @@ export const updateDrive = async (req, res) => {
         graduationYear:
           req.body.criteria?.graduationYear ??
           drive.criteria.graduationYear,
-        minCodingScore:
-          req.body.criteria?.minCodingScore ??
-          drive.criteria.minCodingScore
+       
       },
       status: req.body.status ?? drive.status
     };

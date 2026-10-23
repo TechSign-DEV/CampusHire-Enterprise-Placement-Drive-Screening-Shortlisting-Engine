@@ -70,9 +70,7 @@ export default function CompanyProfile() {
 
   return (
     <main className="profile-container">
-      <Link to="/dashboard" className="btn btn-link mb-3">
-        ← Back to Dashboard
-      </Link>
+   
 
       <form className="profile-form" onSubmit={handleSubmit}>
         <h1 className="h3 mb-2">Company Profile</h1>

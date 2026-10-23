@@ -126,22 +126,7 @@ export default function StudentProfile() {
 
   return (
     <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div className="dashboard-brand">
-          <div className="brand-icon">CH</div>
-          <div>
-            <strong>CampusHire</strong>
-            <div className="text-secondary small">
-              Student Academic Profile
-            </div>
-          </div>
-        </div>
-
-        <Link className="btn btn-outline-secondary" to="/dashboard">
-          <ArrowLeft size={16} className="me-2" />
-          Dashboard
-        </Link>
-      </header>
+    
 
       <main className="profile-container">
         <div className="profile-heading">

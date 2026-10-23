@@ -96,56 +96,72 @@ export default function InterviewScheduling() {
     setForm((previous) => ({ ...previous, [name]: value }));
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setError("");
-    setMessage("");
-    setSaving(true);
+  
+async function handleSubmit(event) {
+  event.preventDefault();
+  setError("");
+  setMessage("");
 
-    try {
-      const payload = {
-        roundName: form.roundName,
-        mode: form.mode,
-        location: form.location,
-        meetingLink: form.meetingLink,
-        startsAt: new Date(form.startsAt).toISOString(),
-        endsAt: new Date(form.endsAt).toISOString(),
-        slotMinutes: Number(form.slotMinutes),
-      };
-
-      const response = await api.post(
-        `/interviews/drives/${form.driveId}/batches`,
-        payload
-      );
-
-      setMessage(
-        `${response.data.message} ${response.data.scheduledCount} candidate(s) scheduled.`
-      );
-
-      await loadSchedule(form.driveId);
-    } catch (err) {
-      setError(
-        err.response?.data?.message || "Could not create interview batch."
-      );
-    } finally {
-      setSaving(false);
-    }
+  if (!form.startsAt || !form.endsAt) {
+    setError("Please select both start and end date/time.");
+    return;
   }
 
-  async function updateSlotStatus(slotId, status) {
-    setError("");
-    setMessage("");
+  const startDate = new Date(form.startsAt);
+  const endDate = new Date(form.endsAt);
+  const now = new Date();
 
-    try {
-      await api.patch(`/interviews/slots/${slotId}/status`, { status });
-      setMessage(`Interview marked ${status.toLowerCase()}.`);
-      await loadSchedule(form.driveId);
-    } catch (err) {
-      setError(
-        err.response?.data?.message || "Could not update interview status."
-      );
-    }
+  if (
+    Number.isNaN(startDate.getTime()) ||
+    Number.isNaN(endDate.getTime())
+  ) {
+    setError("Please enter valid start and end dates.");
+    return;
   }
+
+  if (startDate <= now) {
+    setError("Start time must be in the future. Please select a later time.");
+    return;
+  }
+
+  if (endDate <= startDate) {
+    setError("End time must be after the start time.");
+    return;
+  }
+
+  setSaving(true);
+
+  try {
+    const payload = {
+      roundName: form.roundName.trim(),
+      mode: form.mode,
+      location: form.mode === "OFFLINE" ? form.location.trim() : "",
+      meetingLink: form.mode === "ONLINE" ? form.meetingLink.trim() : "",
+      startsAt: startDate.toISOString(),
+      endsAt: endDate.toISOString(),
+      slotMinutes: Number(form.slotMinutes),
+    };
+
+    const response = await api.post(
+      `/interviews/drives/${form.driveId}/batches`,
+      payload
+    );
+
+    setMessage(
+      `${response.data.message} ${response.data.scheduledCount} candidate(s) scheduled.`
+    );
+
+    await loadSchedule(form.driveId);
+  } catch (err) {
+    setError(
+      err.response?.data?.message ||
+        "Could not create interview batch."
+    );
+  } finally {
+    setSaving(false);
+  }
+}
+
 
   if (loading) {
     return <div className="container py-5">Loading placement drives...</div>;

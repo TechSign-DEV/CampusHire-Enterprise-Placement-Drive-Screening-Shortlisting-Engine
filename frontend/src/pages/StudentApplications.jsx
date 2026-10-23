@@ -69,9 +69,7 @@ export default function StudentApplications() {
 
   return (
     <main className="dashboard-content">
-      <Link to="/dashboard" className="btn btn-link mb-3">
-        ← Back to Dashboard
-      </Link>
+    
 
       <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
         <div>
